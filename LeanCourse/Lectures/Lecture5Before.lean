@@ -65,7 +65,7 @@ This is division rounded down and truncated subtraction.
 #eval 12 / 3
 #eval 7 - 6
 #eval 7 - 7
-#eval 7 - 8
+#eval (7 : ℚ) - 8
 
 /- When using subtraction and division, it is better to do the calculation in the rationals or reals.
 We write `(... : ℚ)` to tell Lean that the `...` should be interpreted as a rational number.
@@ -99,11 +99,14 @@ since `↑n - ↑m = ↑(n - m)` and `↑n / ↑m = ↑(n / m)` are not always t
 example (n : ℕ) : ((n + 1 : ℤ) : ℚ) = n + 1 := by norm_cast
 
 example (n m : ℕ) (h : (n : ℚ) + 1 ≤ m) : (n : ℝ) + 1 ≤ m := by {
-  sorry
+  norm_cast
+  norm_cast at h
   }
 
 example (n m : ℕ) (h : n = m * m + 2) : (n : ℝ) - 3 = (m + 1) * (m - 1) := by {
-  sorry
+  rw[h]
+  push_cast
+  ring
   }
 
 
@@ -121,10 +124,12 @@ def fac : ℕ → ℕ
 --   | 0 => 1
 --   | (n + 1) => wrong (n + 2)
 
+def fib : ℕ → ℕ
+  | 0    => 1
+  | 1    => 1
+  | (n+2)=> fib n + fib (n+1)
 
-
-
-
+#eval fib 14
 
 lemma fac_zero : fac 0 = 1 := rfl
 
@@ -135,7 +140,9 @@ example : fac 4 = 24 := rfl
 #eval fac 100
 
 theorem fac_pos (n : ℕ) : 0 < fac n := by {
-  sorry
+  induction n with
+  | zero => unfold fac; norm_num
+  | succ n ih => rw [fac]; positivity
   }
 
 open BigOperators Finset
@@ -160,7 +167,12 @@ This makes it harder to prove things about it, so we generally avoid using it
 
 
 example (n : ℕ) : ∑ i in range (n + 1), (i : ℚ) = n * (n + 1) / 2 := by {
-  sorry
+  induction n with
+  | zero => simp
+  | succ n ih =>
+    rw[Finset.sum_range_succ,ih]
+    field_simp
+    ring
   }
 
 /- Some other useful induction principles -/
@@ -171,7 +183,11 @@ example (n : ℕ) : ∑ i in range (n + 1), (i : ℚ) = n * (n + 1) / 2 := by {
 /- We can use other induction principles with `induction ... using ... with` -/
 
 theorem fac_dvd_fac (n m : ℕ) (h : n ≤ m) : fac n ∣ fac m := by {
-  sorry
+  induction m, h using Nat.le_induction with
+  | base => rfl
+  | succ k hk ih =>
+      rw[fac]
+      exact Dvd.dvd.mul_left ih (k + 1)
   }
 
 
@@ -319,7 +335,7 @@ instance : Add Point := ⟨add⟩
 @[simp] lemma add_z (a b : Point) : (a + b).z = a.z + b.z := by rfl
 
 example (a b : Point) : a + b = b + a := by {
-  sorry
+  ext <;> simp [add_comm]
   }
 
 end Point
@@ -373,6 +389,15 @@ def set_of_positive_reals : Set ℝ :=
 
 /- However, that doesn't give you nice projections names (automatically).
 And it gets ugly when you have more than 2 projections. -/
+
+#check ℕ
+
+def natural : Type :=
+  { x : ℕ // x ≥ 1}
+
+def x : ℕ := 2
+
+def y : natural := 3
 
 example (x : PosReal) : x.1 > 0 := x.2
 

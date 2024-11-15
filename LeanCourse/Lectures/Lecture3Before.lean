@@ -36,7 +36,6 @@ Tactics we saw last time:
 /- ## Extential quantifiers -/
 
 
-
 /-
 In order to prove `∃ x, P x`, we give some `x₀` using tactic `use x₀` and
 then prove `P x₀`. This `x₀` can be any expression.
@@ -50,7 +49,8 @@ example {α : Type*} [PartialOrder α]
     (isDense : ∀ x y : α, x < y → ∃ z : α, x < z ∧ z < y)
     (x y : α) (hxy : x < y) :
     ∃ z₁ z₂ : α, x < z₁ ∧ z₁ < z₂ ∧ z₂ < y := by {
-  sorry
+  obtain ⟨z, hz⟩ := isDense x y hxy
+  obtain ⟨hxz, hzy⟩ := hz
   }
 
 
@@ -86,12 +86,28 @@ variable (a b : ℝ)
 #check (mul_eq_zero : a * b = 0 ↔ a = 0 ∨ b = 0)
 
 example : a = a * b → a = 0 ∨ b = 1 := by {
-  sorry
+  intro h
+  have h2 : a * (b - 1) = 0 := by linarith
+  have h3 : a = 0 ∨ b-1 = 0 := by apply mul_eq_zero.1 h2
+  obtain p|q := h3
   }
 
 
 example (f : ℝ → ℝ) (hf : StrictMono f) : Injective f := by {
-  sorry
+  --unfold Injective
+  --rw[Injective]
+  --simp [Injective]
+  intro x y h
+  have := lt_trichotomy x y
+  --have := le_total x y
+  --have := le_or_gt x y
+  unfold StrictMono at hf
+  obtain h|h|h := this
+  · specialize hf h
+    linarith
+  · exact h
+  · specialize hf h
+    linarith
   }
 
 
@@ -110,7 +126,10 @@ example {p : Prop} (h : p) : ¬ ¬ p := by
 
 
 example {α : Type*} {p : α → Prop} : ¬ (∃ x, p x) ↔ ∀ x, ¬ p x := by {
-  sorry
+  constructor
+  · intro h x hx
+    apply h
+    use x
   }
 
 
@@ -118,7 +137,9 @@ example {α : Type*} {p : α → Prop} : ¬ (∃ x, p x) ↔ ∀ x, ¬ p x := by
 /- We can use `exfalso` to use the fact that
 everything follows from `False`: ex falso quod libet -/
 example {p : Prop} (h : ¬ p) : p → 0 = 1 := by {
-  sorry
+  intro hp
+  exfalso
+  use h hp
   }
 
 
@@ -168,12 +189,28 @@ def SequentialLimit (u : ℕ → ℝ) (l : ℝ) : Prop :=
 
 example (u : ℕ → ℝ) (l : ℝ) : ¬ SequentialLimit u l ↔
     ∃ ε > 0, ∀ N, ∃ n ≥ N, |u n - l| ≥ ε := by {
-  sorry
+      unfold SequentialLimit
+      push_neg
+      rfl
   }
 
 lemma sequentialLimit_unique (u : ℕ → ℝ) (l l' : ℝ) :
     SequentialLimit u l → SequentialLimit u l' → l = l' := by {
-  sorry
+  intro hl hl'
+  by_contra h
+  let d := |l-l'|
+  have hd : d > 0 := by exact abs_sub_pos.mpr h
+  specialize hl (d/2) (half_pos hd)
+  obtain ⟨N, hN⟩ := hl
+  obtain ⟨N',hN'⟩ := hl' (d/2) (half_pos hd)
+  let N₀ := max N N'
+  specialize hN N₀ (Nat.le_max_left N N')
+  specialize hN' N₀ (Nat.le_max_right N N')
+  calc
+    d = |l - l'| := rfl
+    _ = |(u N₀ - l') - (u N₀ - l)| := by ring
+    _ ≤ |u N₀ - l'| + |u N₀ - l| := by exact abs_sub (u N₀ - l') (u N₀ - l)
+
   }
 
 
@@ -282,6 +319,7 @@ example : s ∩ t = t ∩ s := by
   ext x
   constructor
   · intro hx
+    simp
     exact ⟨hx.2, hx.1⟩
   · intro hx
     exact ⟨hx.2, hx.1⟩
@@ -305,7 +343,9 @@ def Evens : Set ℕ := {n : ℕ | Even n}
 def Odds : Set ℕ := {n | Odd n}
 
 example : Evensᶜ = Odds := by {
-  sorry
+  unfold Evens Odds
+  ext n
+  simp only [mem_compl_iff, mem_setOf_eq, Nat.not_even_iff_odd]
   }
 
 

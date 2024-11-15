@@ -36,6 +36,21 @@ class Dia₁ (α : Type) where
 
 infixl:70 " ⋄ "   => Dia₁.dia
 
+class Bru (α : Type) where
+  bru : α
+
+class Bruno (α : Type) extends Bru α where
+  nobru : α → α
+  bruno : α × α → α
+  bruno_assoc : ∀ a b c : α , bruno ((bruno (a , b)),c) = bruno (a,(bruno (b,c)))
+
+class Na (α : Type) where
+  NorthPole : α
+  SouthPole : α
+
+class Nadi (α : Type) extends Na α where
+  opposing : α × α → Bool
+  AntiPoles : opposing (NorthPole,SouthPole) = True
 
 class Semigroup₁ (α : Type) where
   toDia₁ : Dia₁ α
@@ -53,6 +68,8 @@ class Semigroup₂ (α : Type) extends Dia₁ α where
   dia_assoc : ∀ a b c : α, a ⋄ b ⋄ c = a ⋄ (b ⋄ c)
 
 example {α : Type} [Semigroup₂ α] (a b : α) : α := a ⋄ b
+
+class NadiBruno (α : Type) extends Na α, Bruno α
 
 class DiaOneClass₁ (α : Type) extends One₁ α, Dia₁ α where
   /-- One is a left neutral element for diamond. -/
@@ -88,6 +105,10 @@ example {α : Type} [Monoid₁ α] :
 #check Monoid₁.toSemigroup₁
 #check Monoid₁.toDiaOneClass₁
 
+@[inherit_doc]
+postfix:max "⋆" => Bruno.nobru
+
+example {α : Type} [Bruno α] (a : α × α) : α := a.1 ⋆
 
 class Inv₁ (α : Type) where
   /-- The inversion function -/
@@ -113,10 +134,13 @@ example {M : Type} [Monoid₁ M] {a b c : M} (hba : b ⋄ a = 𝟙) (hac : a ⋄
   rw [← one_dia c, ← hba, dia_assoc, hac, dia_one b]
 
 
-lemma inv_eq_of_dia [Group₁ G] {a b : G} (h : a ⋄ b = 𝟙) : a⁻¹ = b :=
-  sorry
+lemma inv_eq_of_dia [Group₁ G] {a b : G} (h : a ⋄ b = 𝟙) : a⁻¹ = b := by
+  rw[← dia_one a⁻¹,← h,← dia_assoc,inv_dia,one_dia]
 
-lemma dia_inv [Group₁ G] (a : G) : a ⋄ a⁻¹ = 𝟙 :=
+
+lemma dia_inv [Group₁ G] (a : G) : a ⋄ a⁻¹ = 𝟙 := by
+  have q : a⁻¹ ⋄ a = 𝟙 := by apply inv_dia
+  have : (a⁻¹)⁻¹ = a := by exact inv_eq_of_dia q
   sorry
 
 
@@ -170,11 +194,10 @@ class Group₃ (G : Type) extends Monoid₃ G, Inv G where
 
 attribute [simp] Group₃.inv_mul AddGroup₃.neg_add
 
-
-
+export Group₃ (inv_mul)
 @[to_additive]
-lemma inv_eq_of_mul [Group₃ G] {a b : G} (h : a * b = 1) : a⁻¹ = b :=
-  sorry
+lemma inv_eq_of_mul [Group₃ G] {a b : G} (h : a * b = 1) : a⁻¹ = b := by
+  rw[← mul_one a⁻¹, ← h, ← mul_assoc₃, inv_mul,one_mul]
 
 
 @[to_additive (attr := simp)]
@@ -231,13 +254,38 @@ class LE₁ (α : Type) where
 
 @[inherit_doc] infix:50 " ≤₁ " => LE₁.le
 
-class Preorder₁ (α : Type)
+class Preorder₁ (α : Type) extends LE₁ α where
+  reflex : ∀ a : α, le a a
+  transit : ∀ a b c : α, a ≤₁ b ∧ b ≤₁ c → a ≤₁ c
 
-class PartialOrder₁ (α : Type)
+class PartialOrder₁ (α : Type) extends Preorder₁ α where
+  antisym : ∀ a b : α, a ≤₁ b ∧ b ≤₁ a → a = b
 
-class OrderedCommMonoid₁ (α : Type)
+class OrderedCommMonoid₁ (α : Type) extends PartialOrder₁ α, CommMonoid α
 
 instance : OrderedCommMonoid₁ ℕ where
+  le (a b : ℕ) := a ≤ b
+  reflex := by simp
+  transit := by {
+    simp
+    apply le_trans
+  }
+  antisym := by {
+    simp
+    apply le_antisymm
+  }
+  mul (a b : ℕ) := a * b
+  mul_assoc := by {
+    intro a b c
+    exact mul_assoc a b c
+  }
+  one := 1
+  one_mul := by simp
+  mul_one := by simp
+  mul_comm := by {
+    intro a b
+    exact mul_comm a b
+  }
 
 class SMul₃ (α : Type) (β : Type) where
   /-- Scalar multiplication -/

@@ -99,7 +99,8 @@ for numbers.
 #check fun n : ℕ ↦ (n : ℚ)
 
 abbrev PosReal : Type := {x : ℝ // x > 0}
-
+variable {x : PosReal}
+#check x.2
 -- instance : Coe PosReal Real := ⟨fun x ↦ x.1⟩
 
 def diff (x y : PosReal) : ℝ := x - y
@@ -108,8 +109,7 @@ def diff (x y : PosReal) : ℝ := x - y
 /- coercions can be composed. -/
 #check fun (x : PosReal) ↦ (x : ℂ)
 
-
-
+instance : Coe ℚ ℝ := ⟨fun x ↦ x⟩
 
 /-
 * We use `CoeSort` to coerce to `Type _` (or `Sort _`)
@@ -179,11 +179,24 @@ and generally it's easier to reformulate a statement without using subtypes. -/
 
 /- Codomain is a subtype (usually not recommended). -/
 example (f : ℝ → PosReal) (hf : Monotone f) :
-    Monotone (fun x ↦ log (f x)) := by sorry
+    Monotone (fun x ↦ log (f x)) := by{
+    intro x y hxy
+    simp
+    have hx : 0 < (f x).1 := by exact (f x).2
+    exact log_le_log hx (hf hxy)
+    }
+#check Real.logb_le_logb
 
 /- Specify that the range is a subset of a given set (recommended). -/
 example (f : ℝ → ℝ) (hf : range f ⊆ {x | x > 0}) (h2f : Monotone f) :
-  Monotone (log ∘ f) := sorry
+  Monotone (log ∘ f) := by
+  unfold Monotone
+  intro x y hxy
+  simp
+  have hfxy : f x ≤ f y := by exact h2f hxy
+  have hfx : (f x) > 0 := by exact hf (mem_range_self x)
+  exact log_le_log hfx (h2f hxy)
+
 
 /- Domain is a subtype (not recommended). -/
 example (f : PosReal → ℝ) (hf : Monotone f) :
@@ -307,8 +320,9 @@ Groups morphisms are exactly monoid morphisms between groups
 -/
 
 example {G H : Type*} [Group G] [Group H] (x y : G) (f : G →* H) :
-    f (x * y) = f x * f y :=
-  f.map_mul x y
+    f (x * y) = f x * f y := by{
+      exact MonoidHom.map_mul f x y
+    }
 
 example {G H : Type*} [Group G] [Group H] (x : G) (f : G →* H) :
     f (x⁻¹) = (f x)⁻¹ :=

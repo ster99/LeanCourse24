@@ -162,7 +162,14 @@ and generally it's easier to reformulate a statement without using subtypes. -/
 
 /- Codomain is a subtype (usually not recommended). -/
 example (f : ℝ → PosReal) (hf : Monotone f) :
-    Monotone (fun x ↦ log (f x)) := sorry
+    Monotone (fun x ↦ log (f x)) := by{
+    unfold Monotone
+    unfold PosReal at *
+    intro x y h
+    dsimp
+    have : f x ≤ f y := by exact hf h
+    sorry
+    }
 
 /- Specify that the range is a subset of a given set (recommended). -/
 example (f : ℝ → ℝ) (hf : range f ⊆ {x | x > 0}) (h2f : Monotone f) :
@@ -198,6 +205,7 @@ lemma names of these two structures. -/
 
 #check Monoid
 #check AddMonoid
+#synth CommMonoid ℝ
 
 example : CommMonoid ℝ := by infer_instance
 example : AddCommMonoid ℝ := by infer_instance
@@ -236,7 +244,7 @@ The additive version is called `AddMonoidHom` and denoted by `M →+ N`.
 They both have a coercion to functions. -/
 
 example {M N : Type*} [Monoid M] [Monoid N] (x y : M) (f : M →* N) :
-    f (x * y) = f x * f y := by exact?
+    f (x * y) = f x * f y := by exact MonoidHom.map_mul f x y
 
 example {M N : Type*} [AddMonoid M] [AddMonoid N] (f : M →+ N) : f 0 = 0 :=
   f.map_zero
@@ -308,7 +316,7 @@ This type is automatically coerced to morphisms and functions.
 -/
 
 example {G H : Type*} [Group G] [Group H] (f : G ≃* H) :
-    f.trans f.symm = MulEquiv.refl G := by exact?
+    f.trans f.symm = MulEquiv.refl G := by exact MulEquiv.self_trans_symm f
 
 
 

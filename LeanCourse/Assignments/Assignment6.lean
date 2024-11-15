@@ -105,7 +105,21 @@ instance : MulAction G (Subgroup G) := sorry
 Let's define the smallest equivalence relation on a type `X`. -/
 def myEquivalenceRelation (X : Type*) : Setoid X where
   r x y := x = y
-  iseqv := sorry -- Here you have to show that this is an equivalence.
+  iseqv := {
+    refl := by {
+      intro x
+      rfl
+    }
+    symm := by{
+      intro x y hxy
+      rw[hxy]
+    }
+    trans := by{
+      intro x y z hxy hyz
+      rw[← hxy] at hyz
+      exact hyz
+    }
+  } -- Here you have to show that this is an equivalence.
                  -- If you click on the `sorry`, a lightbulb will appear to give the fields
 
 /- This simp-lemma will simplify `x ≈ y` to `x = y` in the lemma below. -/
@@ -122,8 +136,17 @@ Use `Quotient.sound` to prove that two elements of the quotient are equal.
 Use `Quotient.ind` to prove something for all elements of a quotient.
 You can use this using the induction tactic: `induction x using Quotient.ind; rename_i x`.
 -/
+
+def quo (y : Quotient (myEquivalenceRelation X))
+  (h : ∃ x : X, ⟦x⟧ = y) : X :=
+  Classical.choose h
+
 def quotient_equiv_subtype (X : Type*) :
-    Quotient (myEquivalenceRelation X) ≃ X := sorry
+    Quotient (myEquivalenceRelation X) ≃ X where
+      toFun := _
+      invFun := _
+      left_inv := _
+      right_inv := _
 
 
 
@@ -137,13 +160,57 @@ precisely when one element is in the orbit of the other. -/
 def orbitOf (x : X) : Set X := range (fun g : G ↦ g • x)
 
 lemma orbitOf_eq_iff (x y : X) : orbitOf G x = orbitOf G y ↔ y ∈ orbitOf G x := by {
-  sorry
+  constructor
+  · intro h
+    have ytriv : ∃ e, (fun g : G ↦ g • y) e = y := by use 1, MulAction.one_smul y
+    have yorby : y ∈ orbitOf G y := by exact ytriv
+    have yorbx : y ∈ orbitOf G x := by apply Set.mem_of_mem_of_subset yorby (Eq.subset (symm h))
+    exact yorbx
+  · rintro ⟨k,hk⟩; simp at hk
+    have xy : k⁻¹ • y = x := by exact inv_smul_eq_iff.mpr (id (Eq.symm hk))
+    ext z
+    constructor
+    · rintro ⟨l,hl⟩; simp at hl
+      have zy : (l * k⁻¹) • y = z := by {
+        calc
+        (l * k⁻¹) • y = l • k⁻¹ • y := by exact mul_smul l k⁻¹ y
+                    _ = l • x := by exact congrArg (HSMul.hSMul l) xy
+                    _ = z := by exact hl
+      }
+      use (l*k⁻¹)
+    · rintro ⟨l,hl⟩
+      have zx : (l * k) • x = z := by {
+        calc
+        (l * k) • x = l • k • x := by exact mul_smul l k x
+                  _ = l • (y) := by exact congrArg (HSMul.hSMul l) hk
+                  _ = z := by exact hl
+      }
+      use (l*k)
   }
-
 /- Define the stabilizer of an element `x` as the subgroup of elements
 `g ∈ G` that satisfy `g • x = x`. -/
-def stabilizerOf (x : X) : Subgroup G := sorry
-
+def stabilizerOf (x : X) : Subgroup G where
+  carrier := {g : G | g • x = x}
+  mul_mem' := by{
+    intro g k gg kk
+    calc
+    (g * k) • x = g • k • x := by exact mul_smul g k x
+              _ = g • x := by exact congrArg (HSMul.hSMul g) kk
+              _ = x := by exact gg
+  }
+  one_mem' := by{
+    calc
+    1 • x = x := by exact MulAction.one_smul x
+  }
+  inv_mem' := by{
+    simp
+    intro g gg
+    calc
+    g⁻¹ • x = g⁻¹ • (g • x) := by exact congrArg (HSMul.hSMul g⁻¹) (id (Eq.symm gg))
+          _ = (g⁻¹ * g) • x := by exact smul_smul g⁻¹ g x
+          _ = (1:G) • x := by exact congrFun (congrArg HSMul.hSMul (inv_mul_cancel g)) x
+          _ = x := by exact MulAction.one_smul x
+  }
 -- This is a lemma that allows `simp` to simplify `x ≈ y` in the proof below.
 @[simp] theorem leftRel_iff {x y : G} {s : Subgroup G} :
     letI := QuotientGroup.leftRel s; x ≈ y ↔ x⁻¹ * y ∈ s :=

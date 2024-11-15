@@ -36,6 +36,8 @@ end
 namespace MyRing
 variable {R : Type*} [Ring R]
 
+theorem times_one (a : ℝ) : 1*a = a := by ring
+
 theorem add_zero (a : R) : a + 0 = a := by rw [add_comm, zero_add]
 
 theorem add_right_neg (a : R) : a + -a = 0 := by rw [add_comm, neg_add_cancel]
@@ -53,13 +55,26 @@ theorem neg_add_cancel_left (a b : R) : -a + (a + b) = b := by
 
 -- Prove these:
 theorem add_neg_cancel_right (a b : R) : a + b + -b = a := by
-  sorry
+  rw[add_assoc, add_right_neg, add_zero]
 
 theorem add_left_cancel {a b c : R} (h : a + b = a + c) : b = c := by
-  sorry
+  calc
+  b = 0 + b := by rw[zero_add]
+  _ = -a + a + b := by rw[neg_add_cancel]
+  _ = -a + (a + b) := by rw[add_assoc]
+  _ = -a + (a+c) := by rw[h]
+  _ = -a + a + c := by rw[← add_assoc]
+  _ = c := by rw[neg_add_cancel,zero_add]
 
 theorem add_right_cancel {a b c : R} (h : a + b = c + b) : a = c := by
-  sorry
+  calc
+  a = a + 0 := by rw[add_zero]
+  _ = a + (b - b) := by rw[← sub_self]
+  _ = a + b - b := by rw[add_sub]
+  _ = c + b - b := by rw[h]
+  _ = c + (b - b) := by rw[← add_sub]
+  _ = c + 0 := by rw[sub_self]
+  _ = c := by rw[add_zero]
 
 theorem mul_zero (a : R) : a * 0 = 0 := by
   have h : a * 0 + a * 0 = a * 0 + 0 := by
@@ -67,20 +82,34 @@ theorem mul_zero (a : R) : a * 0 = 0 := by
   rw [add_left_cancel h]
 
 theorem zero_mul (a : R) : 0 * a = 0 := by
-  sorry
+  have h: 0 * a + 0 * a = 0 * a + 0 := by
+    rw[← add_mul, add_zero, add_zero]
+  rw[add_left_cancel h]
 
 theorem neg_eq_of_add_eq_zero {a b : R} (h : a + b = 0) : -a = b := by
-  sorry
+  have h1 : a + b = a + -a := by
+    rw[h, ← add_right_neg]
+  rw[add_left_cancel h1]
 
 theorem eq_neg_of_add_eq_zero {a b : R} (h : a + b = 0) : a = -b := by
-  sorry
+  have h2 : a + b = -b + b := by{
+    calc
+    a + b = 0 := by rw[h]
+        _ = -b + b := by rw[neg_add_cancel]
+    }
+  rw[add_right_cancel h2]
 
 theorem neg_zero : (-0 : R) = 0 := by
   apply neg_eq_of_add_eq_zero
   rw [add_zero]
 
 theorem neg_neg (a : R) : - -a = a := by
-  sorry
+  have h: -a + -(-a) = -a+a := by{
+    calc
+    -a + -(-a) = 0 := by rw[add_neg_cancel]
+             _ = -a + a := by rw[neg_add_cancel]
+  }
+  rw[add_left_cancel h]
 
 end MyRing
 
@@ -93,7 +122,7 @@ example (a b : R) : a - b = a + -b :=
 
 end
 
-example (a b : ℝ) : a - b = a + -b :=
+example (a b : ℝ) : a - b = a + -b := by
   rfl
 
 example (a b : ℝ) : a - b = a + -b := by
@@ -103,14 +132,13 @@ namespace MyRing
 variable {R : Type*} [Ring R]
 
 theorem self_sub (a : R) : a - a = 0 := by
-  sorry
+  rw[sub_self]
 
 theorem one_add_one_eq_two : 1 + 1 = (2 : R) := by
   norm_num
 
 theorem two_mul (a : R) : 2 * a = a + a := by
   sorry
-
 end MyRing
 
 section
@@ -135,11 +163,28 @@ theorem mul_inv_cancel (a : G) : a * a⁻¹ = 1 := by
   sorry
 
 theorem mul_one (a : G) : a * 1 = a := by
-  sorry
+  calc
+  a * 1 = a * (a⁻¹*a) := by rw[inv_mul_cancel]
+      _ = a * a⁻¹ * a := by rw[mul_assoc]
+      _ = 1 * a := by rw[mul_inv_cancel]
+      _ = a := by rw[one_mul]
 
 theorem mul_inv_rev (a b : G) : (a * b)⁻¹ = b⁻¹ * a⁻¹ := by
-  sorry
-
+  have h : (a*b)*(b⁻¹*a⁻¹) = 1 := by{
+  calc
+  (a*b)*(b⁻¹*a⁻¹) = a * b * (b⁻¹ * a⁻¹) := by rw[mul_assoc]
+                _ = a * (b * (b⁻¹ * a⁻¹)) := by rw[mul_assoc a b (b⁻¹*a⁻¹)]
+                _ = a * (b * b⁻¹ * a⁻¹) := by rw[← mul_assoc b b⁻¹ a⁻¹]
+                _ = a * (1 * a⁻¹) := by rw[mul_inv_cancel]
+                _ = a * a⁻¹ := by rw[one_mul]
+                _ = 1 := by rw[mul_inv_cancel]
+  }
+  calc
+  (a * b)⁻¹ = (a * b)⁻¹ * 1 := by rw[mul_one]
+          _ = (a * b)⁻¹ * ((a*b) * (b⁻¹*a⁻¹)) := by rw[h]
+          _ = (a * b)⁻¹ * (a*b) * (b⁻¹*a⁻¹) := by rw[← mul_assoc]
+          _ = 1 * (b⁻¹*a⁻¹) := by rw[inv_mul_cancel]
+          _ = (b⁻¹*a⁻¹) := by rw[one_mul]
 end MyGroup
 
 end

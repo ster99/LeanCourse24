@@ -51,11 +51,24 @@ example (ubf : FnHasUb f) (ubg : FnHasUb g) : FnHasUb fun x ↦ f x + g x := by
   use a + b
   apply fnUb_add ubfa ubgb
 
+theorem fnLb_add {f g : ℝ → ℝ} {a b : ℝ} (hfa : FnLb f a) (hgb : FnLb g b) :
+    FnLb (fun x ↦ f x + g x) (a + b) :=
+  fun x ↦ add_le_add (hfa x) (hgb x)
+
 example (lbf : FnHasLb f) (lbg : FnHasLb g) : FnHasLb fun x ↦ f x + g x := by
+  rcases lbf with ⟨a, lbfa⟩
+  rcases lbg with ⟨b, lbgb⟩
+  use a+b
+  apply fnLb_add lbfa lbgb
+
+theorem fnUb_mul {f : ℝ → ℝ} {c d : ℝ} (hfc : FnUb f c) (h : d ≥ 0):
+    FnUb (fun x ↦ (f x) * d) (c * d) := by
   sorry
 
-example {c : ℝ} (ubf : FnHasUb f) (h : c ≥ 0) : FnHasUb fun x ↦ c * f x := by
-  sorry
+/-example {c : ℝ} (ubf : FnHasUb f) (h : c ≥ 0) : FnHasUb fun x ↦ c * f x := by
+  rcases ubf with ⟨d, ubfd⟩
+  use c*d
+  apply fnUb_mul ubfd h-/
 
 example : FnHasUb f → FnHasUb g → FnHasUb fun x ↦ f x + g x := by
   rintro ⟨a, ubfa⟩ ⟨b, ubgb⟩
@@ -123,14 +136,16 @@ section
 variable {a b c : ℕ}
 
 example (divab : a ∣ b) (divbc : b ∣ c) : a ∣ c := by
-  rcases divab with ⟨d, beq⟩
-  rcases divbc with ⟨e, ceq⟩
-  rw [ceq, beq]
-  use d * e; ring
+  rcases divab with ⟨d, rfl⟩
+  rcases divbc with ⟨e, rfl⟩
+  use d * e
+  ring
 
 example (divab : a ∣ b) (divac : a ∣ c) : a ∣ b + c := by
-  sorry
-
+  rcases divab with ⟨d, rfl⟩
+  rcases divac with ⟨e, rfl⟩
+  use d + e
+  ring
 end
 
 section
@@ -142,8 +157,13 @@ example {c : ℝ} : Surjective fun x ↦ x + c := by
   use x - c
   dsimp; ring
 
+#check mul_div_cancel₀
+
 example {c : ℝ} (h : c ≠ 0) : Surjective fun x ↦ c * x := by
-  sorry
+  intro x
+  use (1/c) * x
+  dsimp
+  rw[← mul_assoc, mul_div_cancel₀]; ring; exact h
 
 example (x y : ℝ) (h : x - y ≠ 0) : (x ^ 2 - y ^ 2) / (x - y) = x + y := by
   field_simp [h]
@@ -163,6 +183,9 @@ variable {α : Type*} {β : Type*} {γ : Type*}
 variable {g : β → γ} {f : α → β}
 
 example (surjg : Surjective g) (surjf : Surjective f) : Surjective fun x ↦ g (f x) := by
-  sorry
-
+  intro y
+  dsimp
+  rcases surjg y with ⟨x, hg⟩
+  rcases surjf x with ⟨a,hf⟩
+  use a; rw[hf,hg]
 end
