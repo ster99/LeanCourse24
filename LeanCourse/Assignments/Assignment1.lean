@@ -49,7 +49,7 @@ your proof is finished.
 -/
 
 example (a b : ℝ) : (a+b)^2 = a^2 + 2*a*b + b^2 := by {
-  sorry
+  ring
   }
 
 /- In the first example above, take a closer look at where Lean displays parentheses.
@@ -99,7 +99,8 @@ but it doesn't use the assumptions `h` and `h'`
 -/
 
 example (a b c d : ℝ) (h : b = d + d) (h' : a = b + c) : a + b = c + 4 * d := by {
-  sorry
+  rw[h', h]
+  ring
   }
 
 /- ## Rewriting with a lemma
@@ -138,7 +139,10 @@ right-hand side.
 -/
 
 example (a b c : ℝ) : exp (a + b - c) = (exp a * exp b) / (exp c * exp 0) := by {
-  sorry
+  rw[exp_sub (a+b) c]
+  rw[exp_add a b]
+  rw[exp_zero]
+  ring
   }
 
 
@@ -149,7 +153,8 @@ The two lemmas below express the associativity and commutativity of multiplicati
 #check (mul_comm : ∀ a b : ℝ, a * b = b * a)
 
 example (a b c : ℝ) : a * b * c = b * (a * c) := by {
-  sorry
+  rw[mul_comm a b]
+  rw[mul_assoc b a c]
   }
 
 
@@ -173,7 +178,10 @@ variable {G : Type*} [Group G] (g h : G)
 #check inv_inv g
 
 lemma inverse_of_a_commutator : ⁅g, h⁆⁻¹ = ⁅h, g⁆ := by {
-  sorry
+  rw[commutatorElement_def, commutatorElement_def]
+  rw[mul_inv_rev, mul_inv_rev, mul_inv_rev]
+  rw[inv_inv, inv_inv]
+  rw[mul_assoc, mul_assoc]
   }
 
 end
@@ -184,7 +192,7 @@ end
 Since equality is a symmetric relation, we can also replace the right-hand side of an
 equality by the left-hand side using `←` as in the following example.
 -/
-example (a b c : ℝ) (h : a = b + c) (h' : a + e = d + c) : b + c + e = d + c := by {
+example (a b c d e: ℝ) (h : a = b + c) (h' : a + e = d + c) : b + c + e = d + c := by {
   rw [← h, h']
   }
 
@@ -199,11 +207,11 @@ by the left-hand side, so it will look for `b + c` in the current goal and repla
 -/
 
 example (a b c d : ℝ) (h : a = b + b) (h' : b = c) (h'' : a = d) : b + c = d := by {
-  sorry
+  rw[← h', ← h, h'']
   }
 
 example (a b c d : ℝ) (h : a*d - 1 = c) (h' : a*d = b) : c = b - 1 := by {
-  sorry
+  rw[← h, h']
   }
 
 /- ## Rewriting in a local assumption
@@ -245,11 +253,11 @@ Let's do some exercises using `calc`. Feel free to use `ring` in some steps.
 
 example (a b c : ℝ) (h : a = b + c) : exp (2 * a) = (exp b) ^ 2 * (exp c) ^ 2 := by {
   calc
-    exp (2 * a) = exp (2 * (b + c))                 := by sorry
-              _ = exp ((b + b) + (c + c))           := by sorry
-              _ = exp (b + b) * exp (c + c)         := by sorry
-              _ = (exp b * exp b) * (exp c * exp c) := by sorry
-              _ = (exp b) ^ 2 * (exp c)^2           := by sorry
+    exp (2 * a) = exp (2 * (b + c))                 := by rw[h]
+              _ = exp ((b + b) + (c + c))           := by ring
+              _ = exp (b + b) * exp (c + c)         := by rw[exp_add]
+              _ = (exp b * exp b) * (exp c * exp c) := by rw[exp_add,exp_add]
+              _ = (exp b) ^ 2 * (exp c)^2           := by ring
   }
 
 /-
@@ -265,22 +273,35 @@ Aligning the equal signs and `:=` signs is not necessary but looks tidy.
 
 /- Prove the following using a `calc` block. -/
 example (a b c d : ℝ) (h : c = d*a + b) (h' : b = a*d) : c = 2*a*d := by {
-  sorry
+  calc
+    c = d*a + b   := by rw[h]
+    _ = d*a + a*d := by rw[h']
+    _ = 2*a*d     := by ring
   }
 
 
 
 /- Prove the following using a `calc` block. -/
 
-example (a b c d : ℝ) : a + b + c + d = d + (b + a) + c := by
-  sorry
+example (a b c d : ℝ) : a + b + c + d = d + (b + a) + c := by {
+  /-I used the ring axioms below, otherwise it would have been a proof by ring -/
+  calc
+    a + b + c + d = c + d + (a + b) := by rw[add_assoc, add_comm]
+                _ = d + c + (b + a) := by rw[add_comm c, add_comm b]
+                _ = d + (b + a) + c := by rw[ add_assoc d, add_comm c, add_assoc d]
+}
 
 /- Prove the following using a `calc` block. -/
 
 #check sub_self
 
 example (a b c d : ℝ) (h : c + a = b*a - d) (h' : d = a * b) : a + c = 0 := by {
-  sorry
+  calc
+    a + c = c + a     := by rw[add_comm]
+    _ = b * a - d     := by rw[h]
+    _ = b * a - a * b := by rw[h']
+    _ = b * a - b * a := by ring
+    _ = 0             := by rw[sub_self]
   }
 
 
@@ -303,7 +324,14 @@ variable (R : Type*) [Ring R]
 /- Use `calc` to prove the following from the axioms of rings, without using `ring`. -/
 
 example {a b c : R} (h : a + b = a + c) : b = c := by {
-  sorry
+  calc
+    b = 0 + b         := by rw[zero_add b]
+    _ = -a + a + b    := by rw[neg_add_cancel]
+    _ = -a + (a + b)  := by rw[add_assoc]
+    _ = -a + (a + c)  := by rw[h]
+    _ = -a + a + c    := by rw[← add_assoc]
+    _ = 0 + c         := by rw[← neg_add_cancel]
+    _= c              := by rw[zero_add c]
   }
 
 end
@@ -340,11 +368,17 @@ variable (a b c x : ℝ)
 #check (add_zero a      : a + 0 = a)
 #check (zero_add a      : 0 + a = a)
 
-example : (a + b) * (a - b) = a^2 - b^2 := by sorry
+example : (a + b) * (a - b) = a^2 - b^2 := by {
+  rw[add_mul, mul_sub, mul_sub, add_sub]
+  rw[← pow_two a, ← pow_two b]
+  rw[add_comm, add_sub, add_comm, mul_comm]
+  rw[← add_sub]
+  rw[sub_self]
+}
 
 
 -- Now redo it with `ring`.
 
-example : (a + b) * (a - b) = a^2 - b^2 := by sorry
+example : (a + b) * (a - b) = a^2 - b^2 := by ring
 
 end
