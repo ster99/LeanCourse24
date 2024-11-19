@@ -142,11 +142,34 @@ def quo (y : Quotient (myEquivalenceRelation X))
   Classical.choose h
 
 def quotient_equiv_subtype (X : Type*) :
+
     Quotient (myEquivalenceRelation X) ≃ X where
-      toFun := _
-      invFun := _
-      left_inv := _
-      right_inv := _
+
+    toFun := Quotient.lift (fun (x : X) ↦ x) (by
+      intro a b h
+      simp at h
+      tauto
+    )
+
+    invFun := Quotient.mk (myEquivalenceRelation X)
+
+    left_inv := by {
+      unfold LeftInverse
+      intro y
+      have hh: ⟦Classical.choose (Quotient.exists_rep y)⟧ = y := by
+        exact Classical.choose_spec (Quotient.exists_rep y)
+      rw[← hh]
+      --I wanted to use quo but didn't work...have hh : quo y (Quotient.exists_rep y)
+      apply Quotient.sound
+      rfl
+    }
+
+    right_inv := by {
+      unfold Function.RightInverse
+      unfold LeftInverse
+      intro y
+      simp
+    }
 
 
 
