@@ -66,8 +66,8 @@ others are predicates that take another class as argument -/
 `MonoidWithZero` and `GroupWithZero` capture the
 multiplicative structure of a ring or a field
 -/
-
--- #loogle _ * _ < _ * _ ↔ _
+#loogle _*_ = _ ↔ _
+#check Nat.mul_lt_mul_left
 #check mul_lt_mul_left
 -- #loogle ?a * _ < ?a * _ ↔ _
 
