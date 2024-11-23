@@ -11,7 +11,7 @@ Partner (optional): Marc Fares
 
 During the second half of the course you will work on a project in any area of mathematics of your choice. You can put your project files in this folder.
 
-Since a project likely consists of more than 1 file, it will be useful to publish this as a repository on Github.
+Since a project likely consists of more than 1 file, it will be useful to publish this as a repository on GitHub.
 
 ## Git Instructions
 
@@ -33,10 +33,10 @@ git config --global user.email "youremail@yourdomain.com"
 * Press `Sync changes`
 * Press `OK` (or `OK, don't show again`) when prompted `This action will pull and push commits from and to "origin/master"`
 * In the new window, press `Sign in with browser`
-* If needed, sign in to Github
+* If needed, sign in to GitHub
 * Press `Authorize git-ecosystem`
 * You get the message that you don't have permission to push. Press `Create Fork`.
-* You should now see your changes at `github.com/<YourGithubUsername>/LeanCourse24`.
+* You should now see your changes at `github.com/<YourGitHubUsername>/LeanCourse24`.
 
 ### Pushing Later Commits
 
@@ -62,7 +62,7 @@ Note: After you have created a fork, `git pull` will likely not work anymore fro
 ### Working with a partner
 
 * If you collaborate with another student on a formalization project, you should still both fork this repository.
-* To pull the work from your partner, you can add their repository using `source control` panel `... > Remotes > Add remote ...`. For the URL, you should use `https://github.com/<TheirGithubUserName>/LeanCourse24.git`.
+* To pull the work from your partner, you can add their repository using `source control` panel `... > Remotes > Add remote ...`. For the URL, you should use `https://github.com/<TheirGitHubUserName>/LeanCourse24.git`.
 * After this you can pull their work using `... > Pull / Push > Pull from ...`.
 
 ### Command-line
@@ -97,19 +97,21 @@ Some suggested topics:
   - Prove that the Laurent series for a complex function converges on an annulus.
 
 * In **differential geometry**
-  - define differential 1-forms and exact 1-forms (closed 1-forms are harder to define).
+  - [taken] define differential 1-forms and exact 1-forms (closed 1-forms are harder to define).
     Show that on a simply connected domain, every 1-form is exact. (Mathlib is still missing a general definition of n-forms, but that is too hard for a project)
   - Prove that the product of orientable manifolds is orientable (copy-paste the definition of orientable manifold from Mathlib PR [#16239](https://github.com/leanprover-community/mathlib4/pull/16239/files) and assume your manifolds have no boundary).
   - Prove that a diffeomorphism between connected manifolds is either orientation-preserving or orientation-reversing (copy-paste the definition of orientable manifold from Mathlib PR [#16239](https://github.com/leanprover-community/mathlib4/pull/16239/files) and assume your manifolds have no boundary).
 
 * In **functional analysis** define Fredholm operators and prove basic properties.
 
+* As an application of **Galois theory**: constructible numbers have already been done in Lean, but there is a separate notion of constructible numbers with folding/origami. Define the numbers constructible via origami constructions and prove that it forms a field closed under square roots and cube roots. Stretch goal: classify exactly these numbers (i.e. a number is origami-constructible when there is a series of field extensions each with degree 2 or 3).
+
 * In **hyperbolic geometry** define the Poincaré model of hyperbolic geometry - either the disc model or the half-plane model (or another model altogether), and show that is satisfies most of Euclid's axioms for geometry, but that the parallel postulate fails.
 
 * In **model theory**: complete types of a language are defined in mathlib. Prove for a countable theory that if there are uncountably many types with `n` free variables, then there are continuum many. Or harder: show that in this case that the theory has continuum many non-isomorphic models.
 
 * In **number theory**:
-  - Define Carmichael numbers in Lean and formalize their basic theory, including Korselt's criterion. Prove that 561 is the smallest Carmichael number.
+  - [taken] Define Carmichael numbers in Lean and formalize their basic theory, including Korselt's criterion. Prove that 561 is the smallest Carmichael number.
   - Prove the Hasse-Minkowski theorem for quadratic forms of the form `a_1*X_1^2 + a_2 * X_2^2`. If you have time, prove the `n = 3` case `(a_1*X_1^2 + a_2 * X_2^2 + a_3 * X_3^2)`.
   - Solve some diophantine equations. For example: show that there are no nonzero integer solutions to `x^4-y^4=z^2`. Find all solutions to `x^2+y^2=z^3` and to `|2^k-3^l|=1`.
 
@@ -148,7 +150,7 @@ During class I already discussed searching using the name (using autocomplete or
 
 * Search Mathlib using natural language: https://leansearch.net/
 * Search Mathlib using precise syntax: https://loogle.lean-lang.org/
-* Searching on Github directly: https://github.com/leanprover-community/mathlib4
+* Searching on GitHub directly: https://github.com/leanprover-community/mathlib4
   - This can be useful when searching for a mathematical theorems using its name,
     since the mathlib docs search doesn't search through the documentation of a definition or theorem (only its name).
 
@@ -159,7 +161,7 @@ During class I already discussed searching using the name (using autocomplete or
 
 * You are allowed to ask any AI for help. I do not necessarily recommend using them,
   often their suggestions are not very helpful.
-  * Github copilot can sometimes help with stating lemmas or proving a set.
+  * GitHub copilot can sometimes help with stating lemmas or proving a set.
   * ChatGPT knows some Lean, but it bad at proofs and often suggests outdated Lean 3 syntax
 
 ### Writing definitions
@@ -178,4 +180,17 @@ During your presentation, you can discuss the following (but you don't have to t
 * Show some of the formalized work (for example if you have found interesting way to state a definition, or the statement of the theorem you proved).
 * What went easily when formalizing? What was hard? Were any tools or tactics particularly useful, or did you miss a specific tactic?
 
-You do not have to finish your project before your presentation, so your presentation is probably about the ongoing work. Projects are due February 9 (roughly 1 week after classes end).
+You do not have to finish your project before your presentation, so your presentation is probably about the ongoing work.
+
+## Handing in your project
+
+Projects are due February 9 (roughly 1 week after classes end).
+To "hand-in" your project, you just have to push to your fork of GitHub, and check that all the files show up on GitHub.
+
+Your project should contain a short description of it contents, to help judge what you've formalized.
+This should be included in the repository as a pdf or markdown file (not Word or rich text format).
+Please answer the following questions:
+
+* What are the main results in your formalization.
+* Do you have any `sorry`'s or unfinished proofs? Describe what part (if any) is unfinished.
+* What references/sources have you used?
