@@ -22,38 +22,72 @@ open Real Function Set Nat
 
 
 example {p : ℝ → Prop} (h : ∀ x, p x) : ∃ x, p x := by {
-  sorry
+  specialize h 0
+  use 0
   }
 
 
 example {α : Type*} {p q : α → Prop} (h : ∀ x, p x → q x) :
     (∃ x, p x) → (∃ x, q x) := by {
-  sorry
+  intro h'
+  obtain ⟨ x, hx ⟩ := h'
+  specialize h x
+  apply h at hx
+  use x
   }
 
 /- Prove the following with basic tactics, without using `tauto` or lemmas from Mathlib. -/
 example {α : Type*} {p : α → Prop} {r : Prop} :
     ((∃ x, p x) → r) ↔ (∀ x, p x → r) := by {
-  sorry
+  constructor
+  · intro h x hp
+    apply h
+    use x
+  . intro h h'
+    obtain ⟨ x , hx ⟩ := h'
+    specialize h x
+    apply h
+    exact hx
   }
 
 /- Prove the following with basic tactics, without using `tauto` or lemmas from Mathlib. -/
 example {α : Type*} {p : α → Prop} {r : Prop} :
     (∃ x, p x ∧ r) ↔ ((∃ x, p x) ∧ r) := by {
-  sorry
+  constructor
+  · intro h
+    obtain ⟨ x , hx ⟩ := h
+    constructor
+    · use x
+      exact hx.1
+    · exact hx.2
+  · intro h
+    obtain ⟨ h1, h2 ⟩ := h
+    obtain ⟨ x, hx ⟩ := h1
+    use x
   }
 
 /- Prove the following without using `push_neg` or lemmas from Mathlib.
 You will need to use `by_contra` in the proof. -/
 example {α : Type*} (p : α → Prop) : (∃ x, p x) ↔ (¬ ∀ x, ¬ p x) := by {
-  sorry
+  constructor
+  · intro h
+    push_neg
+    exact h
+  · intro h
+    push_neg at h
+    exact h
   }
 
 def SequentialLimit (u : ℕ → ℝ) (l : ℝ) : Prop :=
   ∀ ε > 0, ∃ N, ∀ n ≥ N, |u n - l| < ε
 
 example (a : ℝ) : SequentialLimit (fun n : ℕ ↦ a) a := by {
-  sorry
+  unfold SequentialLimit
+  intro ε hε
+  simp
+  use 0
+  intro n hn
+  exact hε
   }
 
 /-
@@ -63,7 +97,9 @@ Use `calc` to prove this.
 You can use `exact?` to find lemmas from the library,
 such as the fact that factorial is monotone. -/
 example (n m k : ℕ) (h : n ≤ m) : (n)! ∣ (m + 1)! := by {
-  sorry
+  calc
+    (n)! ∣ (m)! := by exact factorial_dvd_factorial h
+    (m)! ∣ (m+1)! := by exact Dvd.intro_left m.succ rfl
   }
 
 section Set
@@ -73,7 +109,7 @@ variable {α β : Type*} {s t : Set α}
 /- Prove the following statements about sets. -/
 
 example {f : β → α} : f '' (f ⁻¹' s) ⊆ s := by {
-  sorry
+  simp
   }
 
 example {f : β → α} (h : Surjective f) : s ⊆ f '' (f ⁻¹' s) := by {
@@ -182,6 +218,10 @@ that are not in `f x`
 -/
 lemma exercise_cantor (α : Type*) (f : α → Set α) : ¬ Surjective f := by {
   let R := {x | x ∉ f x}
+  unfold Surjective
+  push_neg
+  use R
+  intro a
   sorry
   }
 
@@ -326,21 +366,20 @@ lemma eventuallyGrowsFaster_add {s₁ s₂ t₁ t₂ : ℕ → ℕ}
 lemma eventuallyGrowsFaster_shift : ∃ (s : ℕ → ℕ),
     EventuallyGrowsFaster (fun n ↦ s (n+1)) s ∧ ∀ n, s n ≠ 0 := by {
 
-      let g : ℕ → ℕ := (fun n ↦ factorial n)
+      let g : ℕ → ℕ := (fun n ↦ (n)!)
       unfold EventuallyGrowsFaster
       use g
       constructor
-      · intro k
+      · simp
+        intro k
         use k
-        simp
-        intro n hp
-        simp[g]
-        calc
-        k * (factorial n) ≤ (n+1) * (factorial n) := by gcongr; sorry
-        _ = factorial (n+1) := by exact rfl
-      · intro n
-        simp[g]
-        exact factorial_ne_zero n
+        intro n hn
+        have rec: g (n + 1) = (n + 1) * g (n) := by exact rfl
+        rw[rec]
+        refine Nat.mul_le_mul ?h.h₁ ?h.h₂
+        · exact le_add_right_of_le hn
+        · rfl
+      · exact fun n ↦ factorial_ne_zero n
   }
 
 end Growth

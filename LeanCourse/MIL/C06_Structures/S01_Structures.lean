@@ -81,14 +81,22 @@ theorem addAlt_comm (a b : Point) : addAlt a b = addAlt b a := by
   repeat' apply add_comm
 
 protected theorem add_assoc (a b c : Point) : (a.add b).add c = a.add (b.add c) := by
-  sorry
+  rw[add,add,add,add]
+  ext
+  <;> dsimp
+  repeat' apply add_assoc
 
-def smul (r : ℝ) (a : Point) : Point :=
-  sorry
+def smul (r : ℝ) (a : Point) : Point where
+  x := r * a.x
+  y := r * a.y
+  z := r * a.z
 
 theorem smul_distrib (r : ℝ) (a b : Point) :
     (smul r a).add (smul r b) = smul r (a.add b) := by
-  sorry
+    rw[smul,smul,smul,add,add]
+    ext
+    <;> dsimp
+    <;> ring
 
 end Point
 
@@ -126,8 +134,40 @@ def midpoint (a b : StandardTwoSimplex) : StandardTwoSimplex
   sum_eq := by field_simp; linarith [a.sum_eq, b.sum_eq]
 
 def weightedAverage (lambda : Real) (lambda_nonneg : 0 ≤ lambda) (lambda_le : lambda ≤ 1)
-    (a b : StandardTwoSimplex) : StandardTwoSimplex :=
-  sorry
+    (a b : StandardTwoSimplex) : StandardTwoSimplex where
+  x := lambda * a.x + (1-lambda) * b.x
+  y := lambda * a.y + (1-lambda) * b.y
+  z := lambda * a.z + (1-lambda) * b.z
+  x_nonneg := by {
+    have q0 : lambda * a.x ≥ 0 := by exact Left.mul_nonneg lambda_nonneg a.x_nonneg
+    have q1 : 1-lambda ≥ 0 := by exact sub_nonneg_of_le lambda_le
+    have q2 : (1-lambda) * b.x ≥ 0 := by exact Left.mul_nonneg q1 b.x_nonneg
+    linarith
+  }
+  y_nonneg := by {
+    have q0 : lambda * a.y ≥ 0 := by exact Left.mul_nonneg lambda_nonneg a.y_nonneg
+    have q1 : 1-lambda ≥ 0 := by exact sub_nonneg_of_le lambda_le
+    have q2 : (1-lambda) * b.y ≥ 0 := by exact Left.mul_nonneg q1 b.y_nonneg
+    linarith
+  }
+  z_nonneg := by {
+    have q0 : lambda * a.z ≥ 0 := by exact Left.mul_nonneg lambda_nonneg a.z_nonneg
+    have q1 : 1-lambda ≥ 0 := by exact sub_nonneg_of_le lambda_le
+    have q2 : (1-lambda) * b.z ≥ 0 := by exact Left.mul_nonneg q1 b.z_nonneg
+    linarith
+  }
+  sum_eq := by {
+    let c := 1-lambda
+    have q1 : lambda * (a.x+a.y+a.z) = lambda * 1 := by exact congrArg (HMul.hMul lambda) a.sum_eq
+    have q2 : c * (b.x+b.y+b.z) = c * 1 := by exact congrArg (HMul.hMul c) b.sum_eq
+    calc
+    lambda * a.x + (1 - lambda) * b.x + (lambda * a.y + (1 - lambda) * b.y) + (lambda * a.z + (1 - lambda) * b.z) = lambda * (a.x+a.y+a.z) + (1-lambda) * (b.x+b.y+b.z) := by ring
+                                                                                                                _ = lambda * (a.x+a.y+a.z) + c * (b.x+b.y+b.z) := by exact rfl
+                                                                                                                _ = lambda * 1 + c * 1 := by linarith
+                                                                                                                _ = lambda + c := by ring
+                                                                                                                _ = lambda + (1-lambda) := by rfl
+                                                                                                                _ = 1 := by ring
+  }
 
 end
 

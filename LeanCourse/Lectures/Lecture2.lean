@@ -62,7 +62,10 @@ example : 2 + 2 = 4 := by rfl
 
 example (a b : ℝ) : (a + b) ^ 2 = a ^ 2 + b ^ 2 + 2 * a * b := by ring
 
-
+example (a b c : ℝ) (h1: a = 2) (h2: b = 2) : a + b = 4 := by {
+  rw[h1,h2]
+  ring
+}
 
 
 /- ## Implications

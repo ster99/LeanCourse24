@@ -20,22 +20,38 @@ open Real
 /-! # Exercises to practice. -/
 
 example {a b : ℝ} (h1 : a + 2 * b = 4) (h2 : a - b = 1) : a = 2 := by {
-  sorry
+  linarith
   }
 
 example {u v : ℝ} (h1 : u + 1 = v) : u ^ 2 + 3 * u + 1 = v ^ 2 + v - 1 := by {
-  sorry
+  calc
+  u ^ 2 + 3 * u + 1 = u*u + u + u + u + 1 := by ring
+                  _ = (u+0)*(u+0) + (u+0) + (u+0) + (u+0) + 1 := by ring
+                  _ = (u+1-1)*(u+1-1) + (u+1-1) + (u+1-1) + (u+1-1) + 1 := by ring
+                  _ = (v-1)*(v-1) + (v-1) + (v-1) + (v-1) + 1 := by rw[h1]
+                  _ = v*v + 1 - v - v + v + v + v - 1 - 1 -1 + 1 := by ring
+                  _ = v ^ 2 + v - 1 := by ring
   }
 
 example (a b c x y : ℝ) (h : a ≤ b) (h2 : b < c) (h3 : x ≤ y) :
     a + exp x ≤ c + exp (y + 2) := by {
-  sorry
+    apply add_le_add
+    have p : b ≤ c := by linarith [h2]
+    · apply le_trans
+      · apply h
+      · apply p
+    have q : x ≤ y+2 := by linarith [h3]
+    · apply exp_le_exp.mpr q
   }
 
 /-- Prove the following using `linarith`.
 Note that `linarith` cannot deal with implication or if and only if statements. -/
 example (a b c : ℝ) : a + b ≤ c ↔ a ≤ c - b := by {
-  sorry
+  constructor
+  · intro h
+    linarith
+  · intro p
+    linarith
   }
 
 /- Note: for purely numerical problems, you can use `norm_num`
@@ -84,13 +100,20 @@ example {m n : ℤ} : n - m ^ 2 ≤ n + 3 := by {
 
 
 
-example {a : ℝ} (h : ∀ b : ℝ, a ≥ -3 + 4 * b - b ^ 2) : a ≥ 1 := by {
-  sorry
-  }
+example {a: ℝ} (h : ∀ b : ℝ, a ≥ -3 + 4 * b - b ^ 2) : a ≥ 1 := by{
+  specialize h 2
+  ring at h
+  assumption
+}
+
+
 
 example {a₁ a₂ a₃ b₁ b₂ b₃ : ℝ} (h₁₂ : a₁ + a₂ + 1 ≤ b₁ + b₂) (h₃ : a₃ + 2 ≤ b₃) :
   exp (a₁ + a₂) + a₃ + 1 ≤ exp (b₁ + b₂) + b₃ + 1 := by {
-  sorry
+    have h : rexp (a₁ + a₂ + 1) ≤ rexp (b₁ + b₂) := by exact exp_le_exp.mpr h₁₂
+    have h': rexp (a₁ + a₂ + 1) = rexp (a₁ + a₂) * rexp (1) := by exact exp_add (a₁ + a₂) 1
+
+    sorry
   }
 
 
@@ -129,7 +152,14 @@ example : x > y ↔ y < x := by rfl
 
 
 example (hxy : x ≤ y) (hyz : y ≤ z) (hzx : z ≤ x) : x = y ∧ y = z ∧ x = z := by {
-  sorry
+  constructor
+  · have h : y ≤ x := by exact Preorder.le_trans y z x hyz hzx
+    sorry
+  · constructor
+    · have h : z ≤ y := by exact Preorder.le_trans z x y hzx hxy
+      sorry
+    · have h : x ≤ z := by exact Preorder.le_trans x y z hxy hyz
+      sorry
   }
 
 
@@ -141,12 +171,11 @@ end PartialOrder
 /- Prove this using a calculation. -/
 lemma exercise_calc_real {t : ℝ} (ht : t ≥ 10) : t ^ 2 - 3 * t - 17 ≥ 5 := by {
   calc
-    t ^ 2 - 3 * t - 17 = t * t - 3 * t - 17 := by ring
-    _ ≥ 10 * t - 3 * t - 17                 := by gcongr
-    _ = 7 * t - 17                          := by ring
-    _ ≥ 7 * 10 - 17                         := by gcongr
-    _ ≥ 5                                   := by norm_num
-}
+  t ^ 2 - 3 * t - 17 = t * (t - 3) -17 := by ring
+                   _ ≥ 10 * (10 - 3) - 17 := by gcongr
+                   _ = 53 := by norm_num
+                   _ ≥ 5 := by norm_num
+  }
 
 /- Prove this using a calculation.
 The arguments `{R : Type*} [CommRing R] {t : R}` mean
@@ -186,17 +215,7 @@ lemma exercise_min_comm : min a b = min b a := by {
   }
 
 lemma exercise_min_assoc : min a (min b c) = min (min a b) c := by {
-    apply le_antisymm
-    apply le_min
-    apply le_min
-    apply min_le_left
     sorry
-    sorry
-    apply le_min
-    sorry
-    apply le_min
-    sorry
-    apply min_le_right
   }
 
 end Min
@@ -205,6 +224,9 @@ end Min
 You can use `Continuous.div` as the first step,
 and use the search techniques to find other relevant lemmas.
 `ne_of_lt`/`ne_of_gt` will be useful to prove the inequality. -/
+
+#check ne_of_lt
+#check Continuous.div
 lemma exercise_continuity : Continuous (fun x ↦ (sin (x ^ 5) * cos x) / (x ^ 2 + 1)) := by {
   apply Continuous.div
   · refine Continuous.mul ?hf.hf ?hf.hg
@@ -215,7 +237,6 @@ lemma exercise_continuity : Continuous (fun x ↦ (sin (x ^ 5) * cos x) / (x ^ 2
   · refine Continuous.add ?hg.hf ?hg.hg
     · exact continuous_pow 2
     · exact continuous_const
-  · sorry
   }
 
 /- Prove this only using `intro`/`constructor`/`obtain`/`exact` -/
@@ -232,7 +253,6 @@ lemma exercise_and_comm : ∀ (p q : Prop), p ∧ q ↔ q ∧ p := by {
   · exact hqp.1
   }
 
-
 /-- Prove the following properties of nondecreasing functions. -/
 def Nondecreasing (f : ℝ → ℝ) : Prop := ∀ x₁ x₂ : ℝ, x₁ ≤ x₂ → f x₁ ≤ f x₂
 
@@ -246,7 +266,6 @@ lemma exercise_nondecreasing_comp (f g : ℝ → ℝ) (hg : Nondecreasing g) (hf
       specialize hg (f x₁) (f x₂) hf
       exact hg
   }
-
 
 /-- Note: `f + g` is the function defined by `(f + g)(x) := f(x) + g(x)`.
   `simp` can simplify `(f + g) x` to `f x + g x`. -/
@@ -270,12 +289,17 @@ def EvenFunction (f : ℝ → ℝ) : Prop :=
 lemma exercise_even_iff (f g : ℝ → ℝ) (hf : EvenFunction f) :
     EvenFunction (f + g) ↔ EvenFunction g := by {
       unfold EvenFunction
+      unfold EvenFunction at hf
       constructor
-      simp
-      intro h
-      unfold EvenFunction at hf
-      sorry
-      simp
-      unfold EvenFunction at hf
-      exact fun a x ↦ Mathlib.Tactic.LinearCombination.add_pf (hf x) (a x)
+      · intro h x
+        specialize h x
+        specialize hf x
+        simp at h
+        rw[hf] at h
+        linarith
+      · intro h x
+        specialize h x
+        specialize hf x
+        simp
+        exact Mathlib.Tactic.LinearCombination.add_pf hf h
   }

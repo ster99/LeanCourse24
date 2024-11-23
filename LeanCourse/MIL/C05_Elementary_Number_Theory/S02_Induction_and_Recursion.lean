@@ -6,7 +6,7 @@ example (n : Nat) : n.succ ≠ Nat.zero :=
 
 example (m n : Nat) (h : m.succ = n.succ) : m = n :=
   Nat.succ.inj h
-
+#check Nat
 def fac : ℕ → ℕ
   | 0 => 1
   | n + 1 => (n + 1) * fac n
@@ -48,9 +48,19 @@ theorem dvd_fac {i n : ℕ} (ipos : 0 < i) (ile : i ≤ n) : i ∣ fac n := by
 theorem pow_two_le_fac (n : ℕ) : 2 ^ (n - 1) ≤ fac n := by
   rcases n with _ | n
   · simp [fac]
-  sorry
+  induction n with
+  | zero => simp [fac]
+  | succ n ih =>
+    simp at *
+    have : 2 ≤ n+2 := by exact Nat.le_add_left 2 n
+    calc
+    2^(n+1) = 2^n * 2 := by exact pow_succ 2 n
+          _ ≤ fac (n+1) * 2 := by linarith
+          _ ≤ fac (n+1) * (n+2) := by gcongr
+          _ = (n+2) * fac (n+1) := by apply mul_comm
+          _ = fac (n+2) := by simp [fac]
 section
-
+#check pow_succ'
 variable {α : Type*} (s : Finset ℕ) (f : ℕ → ℕ) (n : ℕ)
 
 #check Finset.sum s f
@@ -99,6 +109,7 @@ theorem sum_id (n : ℕ) : ∑ i in range (n + 1), i = n * (n + 1) / 2 := by
   ring
 
 theorem sum_sqr (n : ℕ) : ∑ i in range (n + 1), i ^ 2 = n * (n + 1) * (2 * n + 1) / 6 := by
+  symm; apply Nat.div_eq_of_eq_mul_right (by norm_num : 0 < 6)
   sorry
 end
 
@@ -111,6 +122,16 @@ namespace MyNat
 def add : MyNat → MyNat → MyNat
   | x, zero => x
   | x, succ y => succ (add x y)
+
+def pred : MyNat → MyNat
+  | zero => zero
+  | succ x => x
+variable {n : MyNat}
+#check pred n
+
+def sub : MyNat → MyNat → MyNat
+  | x, zero => x
+  | x, succ y => pred (sub x y)
 
 def mul : MyNat → MyNat → MyNat
   | x, zero => zero
@@ -134,7 +155,14 @@ theorem add_comm (m n : MyNat) : add m n = add n m := by
   rw [add, succ_add, ih]
 
 theorem add_assoc (m n k : MyNat) : add (add m n) k = add m (add n k) := by
-  sorry
+  induction n with
+  | zero => {
+    rw [zero_add,add]
+  }
+  | succ n ih => {
+    rw [succ_add]
+    sorry
+  }
 theorem mul_add (m n k : MyNat) : mul m (add n k) = add (mul m n) (mul m k) := by
   sorry
 theorem zero_mul (n : MyNat) : mul zero n = zero := by

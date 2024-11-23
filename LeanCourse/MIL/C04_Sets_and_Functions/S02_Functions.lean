@@ -34,10 +34,17 @@ example : s ⊆ f ⁻¹' (f '' s) := by
   use x, xs
 
 example : f '' s ⊆ v ↔ s ⊆ f ⁻¹' v := by
-  sorry
+  constructor
+  intro h x hx
+  show f x ∈ v
+  have h0 : f x ∈ f '' s := by exact mem_image_of_mem f hx
+  exact h h0
+
 
 example (h : Injective f) : f ⁻¹' (f '' s) ⊆ s := by
-  sorry
+intro x h0
+have fs : f x ∈ f '' s := by exact h0
+exact (Injective.mem_set_image h).mp h0
 
 example : f '' (f ⁻¹' u) ⊆ u := by
   sorry
@@ -81,10 +88,34 @@ example : s ∪ f ⁻¹' u ⊆ f ⁻¹' (f '' s ∪ u) := by
 variable {I : Type*} (A : I → Set α) (B : I → Set β)
 
 example : (f '' ⋃ i, A i) = ⋃ i, f '' A i := by
-  sorry
+  ext y
+  constructor
+  · intro h
+    simp at *
+    rcases h with ⟨y,⟨h0,h1⟩⟩
+    rcases h0 with ⟨i₀,hi⟩
+    use i₀
+    rcases h1 with ⟨y,hi⟩
+    use y
+  · intro h
+    simp at *
+    rcases h with ⟨i, ⟨xi,⟨hax,hfx⟩⟩⟩
+    use xi
+    constructor
+    use i
+    exact hfx
+
 
 example : (f '' ⋂ i, A i) ⊆ ⋂ i, f '' A i := by
-  sorry
+simp
+intro i x
+simp at *
+rintro h
+rcases h i with hi
+show f x ∈ f '' A i
+exact mem_image_of_mem f (h i)
+
+
 
 example (i : I) (injf : Injective f) : (⋂ i, f '' A i) ⊆ f '' ⋂ i, A i := by
   sorry
@@ -123,13 +154,35 @@ example : range exp = { y | y > 0 } := by
   rw [exp_log ypos]
 
 example : InjOn sqrt { x | x ≥ 0 } := by
-  sorry
+  unfold InjOn
+  intro x hx y hy q
+  calc
+  x = (√x)^2 := by exact Eq.symm (sq_sqrt hx)
+  _ = (√y)^2 := by exact congrFun (congrArg HPow.hPow q) 2
+  _ = y := by exact sq_sqrt hy
 
 example : InjOn (fun x ↦ x ^ 2) { x : ℝ | x ≥ 0 } := by
-  sorry
+  intro x hx y hy q
+  calc x = √(x^2) := by exact Eq.symm (sqrt_sq hx)
+       _ = √(y^2) := by exact congrArg sqrt q
+       _ = y := by exact sqrt_sq hy
 
 example : sqrt '' { x | x ≥ 0 } = { y | y ≥ 0 } := by
-  sorry
+  ext x
+  constructor
+  intro h
+  simp at h
+  rcases h with ⟨y,⟨pos,sq⟩⟩
+  simp
+  have : √y ≥ 0 := by apply sqrt_nonneg
+  linarith
+  intro h
+  simp
+  use (x^2)
+  constructor
+  · apply sq_nonneg
+  · exact sqrt_sq h
+
 
 example : (range fun x ↦ x ^ 2) = { y : ℝ | y ≥ 0 } := by
   sorry
