@@ -36,12 +36,21 @@ def preimage {W : Type*} [AddCommGroup W] [Module K W] (φ : V →ₗ[K] W) (H :
   carrier := φ ⁻¹' H
   zero_mem' := by
     dsimp
-    sorry
+    refine Set.mem_preimage.mpr ?zero
+    rw[LinearMap.map_zero φ]
+    exact zero_mem H
   add_mem' := by
-    sorry
+    intro a b ha hb
+    refine Set.mem_preimage.mpr ?sum
+    rw[LinearMap.map_add φ]
+    exact add_mem ha hb
   smul_mem' := by
     dsimp
-    sorry
+    intro c v h
+    refine Set.mem_preimage.mpr ?scal
+    rw[LinearMap.map_smul φ]
+    refine SetLike.mem_coe.mpr ?scal.a
+    exact Submodule.smul_mem H c h
 
 example (U : Submodule K V) : Module K U := inferInstance
 
@@ -101,9 +110,36 @@ example {S T : Submodule K V} {x : V} (h : x ∈ S ⊔ T) :
     ∃ s ∈ S, ∃ t ∈ T, x = s + t  := by
   rw [← S.span_eq, ← T.span_eq, ← Submodule.span_union] at h
   apply Submodule.span_induction h (p := fun x ↦ ∃ s ∈ S, ∃ t ∈ T, x = s + t)
-  · sorry
-  · sorry
-  · sorry
+  · rintro y (h1|h2)
+    · use y
+      constructor
+      apply h1
+      use 0
+      constructor
+      · exact Submodule.zero_mem T
+      · rw[add_zero]
+    · use 0
+      constructor
+      exact Submodule.zero_mem S
+      use y
+      constructor
+      · exact h2
+      · module
+  · use 0
+    constructor
+    exact zero_mem S
+    use 0
+    constructor
+    exact zero_mem T
+    module
+  · rintro a b ⟨c,hc,⟨d,⟨hd,acd⟩⟩⟩ ⟨e,he,⟨f,⟨hf,bef⟩⟩⟩
+    use c + e
+    constructor
+    · exact Submodule.add_mem S hc he
+    · use d + f
+      constructor
+      · exact Submodule.add_mem T hd hf
+      · sorry
   · sorry
 
 section
@@ -134,7 +170,18 @@ example : Surjective φ ↔ range φ = ⊤ := range_eq_top.symm
 
 example (E : Submodule K V) (F : Submodule K W) :
     Submodule.map φ E ≤ F ↔ E ≤ Submodule.comap φ F := by
-  sorry
+    constructor
+    intro h x he
+    refine Submodule.mem_comap.mpr ?mp.a
+    apply h
+    exact Submodule.mem_map_of_mem he
+    intro h y hy
+    have : ∃ x ∈ E, φ x = y := by exact hy
+    rcases this with ⟨x₀,⟨h1,h2⟩⟩
+    have : x₀ ∈ Submodule.comap φ F := by apply h h1
+    have : φ x₀ ∈ F := by exact h h1
+    rw[h2] at this
+    exact this
 
 variable (E : Submodule K V)
 
@@ -159,7 +206,14 @@ open Submodule
 #check Submodule.comap_map_eq
 
 example : Submodule K (V ⧸ E) ≃ { F : Submodule K V // E ≤ F } where
-  toFun := sorry
-  invFun := sorry
-  left_inv := sorry
+  toFun F := ⟨comap E.mkQ F, by
+    conv_lhs => rw [← E.ker_mkQ, ← comap_bot]
+    gcongr
+    apply bot_le⟩
+  invFun F := map E.mkQ F
+  left_inv F := by{
+    dsimp
+    rw [Submodule.map_comap_eq, E.range_mkQ]
+    exact top_inf_eq F
+  }
   right_inv := sorry

@@ -176,7 +176,19 @@ lemma eq_bot_iff_card {G : Type*} [Group G] {H : Subgroup G} :
     H = ⊥ ↔ Nat.card H = 1 := by
   suffices (∀ x ∈ H, x = 1) ↔ ∃ x ∈ H, ∀ a ∈ H, a = x by
     simpa [eq_bot_iff_forall, Nat.card_eq_one_iff_exists]
-  sorry
+  constructor
+  · intro h
+    use 1
+    exact ⟨Subgroup.one_mem H,h⟩
+  · rintro ⟨x,⟨hx1,hx2⟩⟩
+    by_contra q
+    simp at q
+    rcases q with ⟨x₀,⟨h0,h1⟩⟩
+    have qq : 1∈ H := by exact Subgroup.one_mem H
+    have q1 : 1 = x := by apply hx2 1 qq
+    have q2 : x₀ = x := by apply hx2 x₀ h0
+    have q3 : x₀ = 1 := by simp [q2,q1]
+    exact h1 q3
 
 #check card_dvd_of_le
 
