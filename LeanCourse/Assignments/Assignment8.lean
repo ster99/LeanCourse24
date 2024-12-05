@@ -194,17 +194,32 @@ a filter of the form `if q then F else G`. The next exercise is a more concrete 
 Useful lemmas here are
 * `Filter.Eventually.filter_mono`
 * `Filter.Eventually.mono` -/
+#check Eventually.of_forall
+#check Eventually.mono
+#check Eventually.and
+#check Filter.Eventually.filter_mono
+#check Filter.Eventually.mono
 lemma technical_filter_exercise {ι α : Type*} {p : ι → Prop} {q : Prop} {a b : α}
     {L : Filter ι} {F G : Filter α}
     (hbF : ∀ᶠ x in F, x ≠ b) (haG : ∀ᶠ x in G, x ≠ a) (haF : pure a ≤ F) (hbG : pure b ≤ G) :
     (∀ᶠ i in L, p i ↔ q) ↔
     Tendsto (fun i ↦ if p i then a else b) L (if q then F else G) := by {
   have hab : a ≠ b
-  · sorry
+  · by_contra h
+    have qq : pure a ≤ G := by exact le_of_eq_of_le (congrArg pure h) hbG
+    have Q : ∀ᶠ x in pure a, x ≠ a := by apply Filter.Eventually.filter_mono qq haG
+    apply Q
+    tauto
   rw [tendsto_iff_eventually]
-  sorry
+  constructor
+  · intro h p d
+    sorry
+  · sorry
   }
-
+  example {ι : Type*} {L : Filter ι} {f g : ι → ℝ} (h1 : ∀ᶠ i in L, f i ≤ g i)
+    (h2 : ∀ᶠ i in L, g i ≤ f i) : ∀ᶠ i in L, f i = g i := by
+  filter_upwards [h1, h2] with i h1 h2
+  exact le_antisymm h1 h2
 /- To be more concrete, we can use the previous lemma to prove the following.
 if we denote the characteristic function of `A` by `1_A`, and `f : ℝ → ℝ` is a function,
 then  `f * 1_{s i}` tends to `f * 1_t` iff `x ∈ s i` is eventually equivalent to
@@ -215,5 +230,8 @@ lemma tendsto_indicator_iff {ι : Type*} {L : Filter ι} {s : ι → Set ℝ} {t
     (ha : ∀ x, f x ≠ 0) :
     (∀ x, ∀ᶠ i in L, x ∈ s i ↔ x ∈ t) ↔
     Tendsto (fun i ↦ indicator (s i) f) L (𝓝 (indicator t f)) := by {
-  sorry
+  constructor
+  · intro h F hF
+
+
   }
