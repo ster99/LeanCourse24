@@ -49,7 +49,7 @@ your proof is finished.
 -/
 
 example (a b : ℝ) : (a+b)^2 = a^2 + 2*a*b + b^2 := by {
-  ring
+  sorry
   }
 
 /- In the first example above, take a closer look at where Lean displays parentheses.

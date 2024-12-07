@@ -146,38 +146,66 @@ lemma add_pow_eq_pow_add_pow (x y : R) : (x + y) ^ p = x ^ p + y ^ p := by {
   have hp' : p.Prime := hp.out
   have range_eq_insert_Ioo : range p = insert 0 (Ioo 0 p)
   · ext n
-    simp
     constructor
-    intro h
-    by_cases q: n=0
-    · left
-      exact q
-    · right
-      exact ⟨zero_lt_of_ne_zero q,h⟩
-    · rintro (h0|⟨h1,h2⟩)
-      · rw[h0]
+    · simp
+      intro hn
+      by_cases h: n=0
+      · tauto
+      · right
+        constructor
+        · exact zero_lt_of_ne_zero h
+        · assumption
+    · simp
+      intro hn
+      obtain hn₁|hn₂ := hn
+      · rw[hn₁]
         exact pos_of_neZero p
-      · exact h2
-
-  have dvd_choose : ∀ i ∈ Ioo 0 p, p ∣ Nat.choose p i := by {
-  simp
-  have hi : ∀ i : ℕ, (i ≤ p) →  p.choose i = p.factorial / (i.factorial * (p - i).factorial) := by exact fun i a ↦ choose_eq_factorial_div_factorial a
-  sorry
-  }
+      · tauto
+  have dvd_choose : ∀ i ∈ Ioo 0 p, p ∣ Nat.choose p i := by
+    intro i hi
+    simp at hi
+    refine Prime.dvd_choose_self hp' ?hk hi.2
+    exact Nat.ne_zero_iff_zero_lt.mpr hi.1
   have h6 : ∑ i in Ioo 0 p, x ^ i * y ^ (p - i) * Nat.choose p i = 0 :=
   calc
-    _ =  ∑ i in Ioo 0 p, x ^ i * y ^ (p - i) * 0 := by {
-      have : ∀ i ∈ Ioo 0 p, ∃ k ∈ ℕ, Nat.choose p i = p * k := by
-        apply CharP.cast_eq_zero_iff.mpr dvd_choose
-    }
-    _ = 0 := by sorry
-  sorry
+    _ =  ∑ i in Ioo 0 p, x ^ i * y ^ (p - i) * 0 := by
+      apply Finset.sum_congr
+      tauto
+      intro i v
+      congr
+      refine (ringChar.spec R (p.choose i)).mpr ?e_f.h.e_a.a
+      have k : ringChar R = p := by exact ringChar.eq R p
+      rw[k]
+      specialize dvd_choose i
+      apply dvd_choose
+      assumption
+    _ = 0 := by simp[dvd_choose]
+  rw[add_pow]
+  have : range (p+1) = insert p (range p) := by {
+    ext n
+    simp
+    constructor
+    · intro h
+      by_cases k: n=p
+      · left
+        assumption
+      · right
+        refine Nat.lt_of_le_of_ne ?_ k
+        exact le_of_lt_succ h
+    · intro h
+      obtain h₁|h₂ := h
+      · rw[h₁]
+        tauto
+      · calc
+          n < p := by exact h₂
+          p < p+1 := by exact lt_add_one p
   }
-  #leansearch "(R : Type*) [CommRing R] [IsDomain R] [CharP R p], ∀ y ∈ R, y * p = 0."
-#check Nat.factorial_mul_factorial_dvd_factorial
-#check Nat.choose_eq_factorial_div_factorial
-#check Nat.factorial_dvd_descFactorial
-#leansearch "sum between two integers."
+  simp[this]
+  simp[range_eq_insert_Ioo, h6]
+  -- Probably there was a shorter way
+  }
+
+
 section LinearMap
 
 variable {R M₁ M₂ N M' : Type*} [CommRing R]
@@ -190,65 +218,34 @@ for modules over a ring, so feel free to think of `M₁`, `M₂`, `N` and `M'` a
 You might recognize this as the characterization of a *coproduct* in category theory. -/
 
 def coproduct (f : M₁ →ₗ[R] N) (g : M₂ →ₗ[R] N) : M₁ × M₂ →ₗ[R] N where
-  toFun x := f x.1 + g x.2
-  map_add' x y := by {
-    simp
-    exact add_add_add_comm (f x.1) (f y.1) (g x.2) (g y.2)
-  }
+  toFun x := f (x.1) + g (x.2)
+  map_add' x y := by simp; module
   map_smul' r x := by simp
 
 -- this can be useful to have as a simp-lemma, and should be proven by `rfl`
 @[simp] lemma coproduct_def (f : M₁ →ₗ[R] N) (g : M₂ →ₗ[R] N) (x : M₁) (y : M₂) :
-  coproduct f g (x, y) = f x + g y := by{
-    unfold coproduct
-    simp
-  }
-
-
+  coproduct f g (x, y) = f x + g y := by rfl
 
 lemma coproduct_unique {f : M₁ →ₗ[R] N} {g : M₂ →ₗ[R] N} {l : M₁ × M₂ →ₗ[R] N} :
     l = coproduct f g ↔
     l.comp (LinearMap.inl R M₁ M₂) = f ∧
     l.comp (LinearMap.inr R M₁ M₂) = g := by {
-      let p : M₁ → M₁ × M₂ := fun x₁ => (x₁,0)
-      have : IsLinearMap R p :={
-        map_add := by {
-        intro x y
-        calc
-        p (x + y) = (x + y,0) := by rfl
-                _ = (x,0) + (y,0) := by exact Eq.symm (Prod.mk_zero_add_mk_zero x y)
-                _ = p x + p y := by rfl
-        }
-        map_smul := by{
-          intro a x
-          calc
-          p (a • x) = (a • x,0) := by rfl
-                  _ = a • (x,0) := by exact Eq.symm (Prod.smul_mk_zero a x)
-                  _ = a • p x := by rfl
-        }
-      }
-      constructor
-      · intro h
-        constructor
-        · ext x
-          simp
-          have : l (x,0) = coproduct f g (x,0) := by exact congrFun (congrArg DFunLike.coe h) (x, 0)
-          have qq : coproduct f g (x,0) = f x := by simp
-          rw[this,qq]
-        · ext y
-          simp
-          have : l (0,y) = coproduct f g (0,y) := by exact congrFun (congrArg DFunLike.coe h) (0,y)
-          have qq : coproduct f g (0,y) = g y := by simp
-          rw[this,qq]
-      · rintro ⟨h1,h2⟩
-        ext x
-        unfold coproduct
-        simp
-        have : x = ((x.1,0) + (0,x.2)) := by exact Eq.symm (Prod.fst_add_snd x)
-        have : l x = l ((x.1,0) + (0,x.2)) := by exact congrArg (⇑l) this
-        have : l ((x.1,0) + (0,x.2)) = l (x.1,0) + l (0,x.2) := by exact LinearMap.map_add l (x.1, 0) (0, x.2)
-        have : l (x.1,0) = l (p (x.1)) := by exact rfl
-        have : l (p (x.1)) = f x.1 := by apply h1 x.1
-    }
+  constructor
+  · intro h
+    rw[h]
+    constructor
+    · ext m
+      simp
+    · ext m
+      simp
+  · intro h
+    obtain ⟨h1, h2⟩ := h
+    ext ⟨m₁, m₂⟩
+    calc
+      l (m₁, m₂) = l (LinearMap.inl R M₁ M₂ m₁ + LinearMap.inr R M₁ M₂ m₂) := by simp
+              _ = l (LinearMap.inl R M₁ M₂ m₁) + l (LinearMap.inr R M₁ M₂ m₂) := by rw[l.map_add]
+              _ = f m₁ + g m₂ := by rw [←h1, ←h2]; simp
+              _ = coproduct f g (m₁, m₂) := by simp [coproduct_def]
+  }
 
 end LinearMap

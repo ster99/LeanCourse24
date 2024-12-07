@@ -30,8 +30,16 @@ def mkVectorSpace {K X : Type*} [Field K] [AddCommGroup X] (ρ : K →+* AddMono
 example {R M : Type*} [CommSemiring R] [AddCommMonoid M] [Module R M] :
     Module (Ideal R) (Submodule R M) :=
   inferInstance
-
-
+noncomputable section
+instance reals : Module ℝ (ℝ × ℝ) where
+  smul a v := (a * v.1, a * v.2)
+  one_smul := _
+  mul_smul := _
+  smul_zero := _
+  smul_add := _
+  add_smul := _
+  zero_smul := _
+end section
 
 variable {W : Type*} [AddCommGroup W] [Module K W]
 

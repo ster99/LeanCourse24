@@ -122,11 +122,8 @@ which can be written using `\|`. -/
 
 /-- Prove this using calc. -/
 lemma exercise_division (n m k l : ℕ) (h₁ : n ∣ m) (h₂ : m = k) (h₃ : k ∣ l) : n ∣ l := by {
-  calc
-     n ∣ m  := by apply h₁
-     _ = k  := by apply h₂
-     _ ∣ l  := by apply h₃
-}
+  sorry
+  }
 
 
 /- We can also work with abstract partial orders. -/

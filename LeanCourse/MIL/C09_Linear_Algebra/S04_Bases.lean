@@ -5,9 +5,13 @@ import Mathlib.LinearAlgebra.Dimension.Finrank
 
 import LeanCourse.Common
 
+#check ![1, 2, 3]
+#check ![1/√3,1/√3,1/√3]
+#eval ![1,1] + ![1,-1]
+
 
 section matrices
-
+#eval !![1, 1; -1, 1] * !![1,0;0,1]
 -- Adding vectors
 #eval !![1, 2] + !![3, 4]  -- !![4, 6]
 
@@ -29,6 +33,8 @@ open Matrix
 #eval  ![1, 1, 1] ᵥ* !![1, 2; 3, 4; 5, 6] -- ![9, 12]
 #eval row (Fin 1) ![1, 2] -- !![1, 2]
 
+
+#eval !![1;2] * !![3,2]
 #eval col (Fin 1) ![1, 2] -- !![1; 2]
 
 -- vector dot product
@@ -36,10 +42,10 @@ open Matrix
 
 -- matrix transpose
 #eval !![1, 2; 3, 4]ᵀ -- `!![1, 3; 2, 4]`
-
+#eval !![1,2;3,2]ᵀ
 -- determinant
 #eval !![(1 : ℤ), 2; 3, 4].det -- `-2`
-
+#check !![(1:ℚ),(2:ℕ);(3:ℚ),4].trace
 -- trace
 #eval !![(1 : ℤ), 2; 3, 4].trace -- `5`
 
@@ -57,7 +63,9 @@ variable (a b c d : ℝ) in
 
 #norm_num [Matrix.inv_def] !![(1 : ℝ), 2; 3, 4]⁻¹ -- !![-2, 1; 3 / 2, -(1 / 2)]
 
+#eval [Matrix.inv_def] !![1,0;0,1]⁻¹
 
+#norm_num [Matrix.inv_def] !![(1:ℝ), 0; 0, -1]⁻¹
 example : !![(1 : ℝ), 2; 3, 4]⁻¹ * !![(1 : ℝ), 2; 3, 4] = 1 := by
   have : Invertible !![(1 : ℝ), 2; 3, 4] := by
     apply Matrix.invertibleOfIsUnitDet
@@ -84,10 +92,11 @@ example : !![1, 1; 1, 1] * !![1, 1; 1, 1] = !![2, 2; 2, 2] := by
 example {n : ℕ} (v : Fin n → ℝ) :
     Matrix.vandermonde v = Matrix.of (fun i j : Fin n ↦ v i ^ (j : ℕ)) :=
   rfl
-end
-end matrices
-variable {K : Type*} [Field K] {V : Type*} [AddCommGroup V] [Module K V]
 
+variable {K : Type*} [Field K] {V : Type*} [AddCommGroup V] [Module K V]
+#check Matrix.of (fun i j : ℕ ↦ i * j)
+def A {m n : ℕ} : Matrix (Fin m) (Fin n) ℝ := Matrix.of (fun (i : Fin m) (j : Fin n) ↦ (i * j : ℝ))
+#check A 2 3
 section
 
 variable {ι : Type*} (B : Basis ι K V) (v : V) (i : ι)
@@ -197,7 +206,13 @@ example [Fintype ι] (B' : Basis ι K V) (φ : End K V) :
   set M' := toMatrix B' B' φ
   set P := (toMatrix B B') LinearMap.id
   set P' := (toMatrix B' B) LinearMap.id
-  sorry
+  have F : M = P' * M' * P := by rw [← toMatrix_comp, ← toMatrix_comp, id_comp, comp_id]
+  have F' : P' * P = 1 := by
+    rw [← toMatrix_comp, id_comp, toMatrix_id]
+  rw [F, Matrix.det_mul, Matrix.det_mul,
+          show P'.det * M'.det * P.det = P'.det * P.det * M'.det by ring, ← Matrix.det_mul, F',
+      Matrix.det_one, one_mul]
+
 end
 
 section
@@ -247,9 +262,19 @@ example : finrank K (E ⊔ F : Submodule K V) + finrank K (E ⊓ F : Submodule K
 example : finrank K E ≤ finrank K V := Submodule.finrank_le E
 example (h : finrank K V < finrank K E + finrank K F) :
     Nontrivial (E ⊓ F : Submodule K V) := by
-  sorry
+  by_contra q
+  have : ¬ (∃ x y : (E ⊓ F : Submodule K V), x ≠ y) := by sorry
+  have r : (E ⊓ F : Submodule K V) = ⊥ := by sorry
+  have : finrank K E + finrank K F = finrank K (E ⊔ F : Submodule K V) + finrank K (E ⊓ F : Submodule K V) :=
+      by exact Eq.symm (Submodule.finrank_sup_add_finrank_inf_eq E F)
+  have q1: finrank K (E ⊓ F : Submodule K V) = 0 := by exact Submodule.finrank_eq_zero.mpr r
+  have q2: finrank K V < finrank K (E ⊔ F : Submodule K V) := by linarith
+  have q3: finrank K (E ⊔ F : Submodule K V) ≤ finrank K V := by exact Submodule.finrank_le (E ⊔ F)
+  have : finrank K V < finrank K V := by exact Nat.lt_of_lt_of_le q2 q3
+  have : finrank K V ≠ finrank K V := by exact Nat.ne_of_lt this
+  exact this rfl
 end
-
+#leansearch "tirvial group."
 #check V -- Type u_2
 #check Module.rank K V -- Cardinal.{u_2}
 

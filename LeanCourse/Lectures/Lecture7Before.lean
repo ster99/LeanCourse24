@@ -66,8 +66,8 @@ others are predicates that take another class as argument -/
 `MonoidWithZero` and `GroupWithZero` capture the
 multiplicative structure of a ring or a field
 -/
-
--- #loogle _ * _ < _ * _ ↔ _
+#loogle _*_ = _ ↔ _
+#check Nat.mul_lt_mul_left
 #check mul_lt_mul_left
 -- #loogle ?a * _ < ?a * _ ↔ _
 
@@ -314,7 +314,8 @@ E.g. we want to say that `X ^ 2 - 2 : ℤ[X]` has a root in `ℝ` -/
 #check aeval (R := R) (A := A)
 
 example : ∃ (x : ℝ), aeval x (X ^ 2 - 2 : ℤ[X]) = 0 := by {
-  sorry
+  use √2
+  simp
   }
 
 
@@ -461,7 +462,7 @@ Things are often easier when stated using linear maps than with matrices. -/
 
 example {m n : Type*} (M : Matrix m n M) : Mᵀᵀ = M := rfl
 
-
+example {m n : ℕ} : Type := Matrix (Fin m) (Fin m) ℝ
 
 /- We use `ι → ℝ` to denote `ℝ^n` if `ι` has `n` elements.
 However, it is nicer to work over an abstract (finite-dimensional)
@@ -472,7 +473,7 @@ example {V : Type*} [AddCommGroup V] [Module ℝ V]
 
 /- `Module.finrank` gives the dimension of a vector space. -/
 #check Module.finrank R M
-
+#check Module.rank ℝ ℝ
 /- `Basis ι R M` is a structure of a basis of a vector space.
 It is given by an equivalence of `M` with `ι →₀ R`, which is the
 (infinitary) coproduct of copies of `R`, vectors indexed by `ι`,

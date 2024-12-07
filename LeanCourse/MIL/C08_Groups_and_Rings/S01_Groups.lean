@@ -81,18 +81,34 @@ example {G : Type*} [Group G] (H H' : Subgroup G) :
 example {G : Type*} [Group G] (x : G) : x ∈ (⊤ : Subgroup G) := trivial
 
 example {G : Type*} [Group G] (x : G) : x ∈ (⊥ : Subgroup G) ↔ x = 1 := Subgroup.mem_bot
-
+#leansearch "zero element of a group."
 def conjugate {G : Type*} [Group G] (x : G) (H : Subgroup G) : Subgroup G where
   carrier := {a : G | ∃ h, h ∈ H ∧ a = x * h * x⁻¹}
   one_mem' := by
     dsimp
-    sorry
+    use 1
+    constructor
+    · exact Subgroup.one_mem H
+    · group
   inv_mem' := by
     dsimp
-    sorry
+    rintro y ⟨z,⟨hz1,hz2⟩⟩
+    use z⁻¹
+    constructor
+    · exact (Subgroup.inv_mem_iff H).mpr hz1
+    · have : (x * z⁻¹ * x⁻¹) * y = 1 := by {
+      calc
+      (x * z⁻¹ * x⁻¹) * y = (x * z⁻¹ * x⁻¹) * (x * z * x⁻¹) := by exact congrArg (HMul.hMul (x * z⁻¹ * x⁻¹)) hz2
+                        _ = 1 := by group
+      }
+      exact inv_eq_of_mul_eq_one_left this
   mul_mem' := by
     dsimp
-    sorry
+    rintro a b ⟨ya,⟨hya1,hya2⟩ ⟩ ⟨yb,⟨hyb1,hyb2⟩⟩
+    use ya * yb
+    constructor
+    · exact (Subgroup.mul_mem_cancel_right H hyb1).mpr hya1
+    · simp [hya2,hyb2]
 
 example {G H : Type*} [Group G] [Group H] (G' : Subgroup G) (f : G →* H) : Subgroup H :=
   Subgroup.map f G'
@@ -117,17 +133,24 @@ variable {G H : Type*} [Group G] [Group H]
 open Subgroup
 
 example (φ : G →* H) (S T : Subgroup H) (hST : S ≤ T) : comap φ S ≤ comap φ T := by
-  sorry
+  intro x h
+  simp at *
+  exact hST h
 
 example (φ : G →* H) (S T : Subgroup G) (hST : S ≤ T) : map φ S ≤ map φ T := by
-  sorry
+  intro x h
+  simp at *
+  rcases h with ⟨x₀,⟨hz1,hx2⟩ ⟩
+  use x₀
+  exact ⟨hST hz1,hx2⟩
 
 variable {K : Type*} [Group K]
 
 -- Remember you can use the `ext` tactic to prove an equality of subgroups.
 example (φ : G →* H) (ψ : H →* K) (U : Subgroup K) :
     comap (ψ.comp φ) U = comap φ (comap ψ U) := by
-  sorry
+  ext x
+  simp
 
 -- Pushing a subgroup along one homomorphism and then another is equal to
 -- pushing it forward along the composite of the homomorphisms.
@@ -153,7 +176,19 @@ lemma eq_bot_iff_card {G : Type*} [Group G] {H : Subgroup G} :
     H = ⊥ ↔ Nat.card H = 1 := by
   suffices (∀ x ∈ H, x = 1) ↔ ∃ x ∈ H, ∀ a ∈ H, a = x by
     simpa [eq_bot_iff_forall, Nat.card_eq_one_iff_exists]
-  sorry
+  constructor
+  · intro h
+    use 1
+    exact ⟨Subgroup.one_mem H,h⟩
+  · rintro ⟨x,⟨hx1,hx2⟩⟩
+    by_contra q
+    simp at q
+    rcases q with ⟨x₀,⟨h0,h1⟩⟩
+    have qq : 1∈ H := by exact Subgroup.one_mem H
+    have q1 : 1 = x := by apply hx2 1 qq
+    have q2 : x₀ = x := by apply hx2 x₀ h0
+    have q3 : x₀ = 1 := by simp [q2,q1]
+    exact h1 q3
 
 #check card_dvd_of_le
 
