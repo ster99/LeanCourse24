@@ -2,9 +2,9 @@
 
 Please fill out the following. Fill in the project topic once you have decided.
 ```
-First & last name: Marc Fares
-Project topic: Differential 1-forms
-Partner (optional): Stefano Rocca
+First & last name: Stefano Rocca
+Project topic: Orientability of product smooth manifolds
+Partner (optional): Marc Fares
 ```
 
 ## Your own project
